@@ -1,6 +1,6 @@
 use std::path::Path;
 use clap::Parser;
-use inpa::summarize_parquet_metadata;
+use pepa::summarize_parquet_metadata;
 
 #[derive(Parser, Debug)]
 struct Args {
