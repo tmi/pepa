@@ -48,6 +48,57 @@ fn schema_brief(metadata: &ParquetMetaData) -> SchemaBrief {
     }
 }
 
+#[derive(Serialize, Debug)]
+struct Pandas {
+    version: String,
+    library: String,
+}
+
+
+#[derive(Serialize, Debug)]
+struct Creator <'a> {
+    created_by: &'a str,
+    metadata_version: i32,
+    pandas: Option<Pandas>,
+}
+
+fn creator<'a>(metadata: &'a ParquetMetaData) -> Creator {
+    let file_metadata = metadata.file_metadata();
+    // TODO improve the None=>None etc
+    let pandas_raw: Option<&String> = match file_metadata.key_value_metadata() {
+        Some(vec_kv) => {
+            let candidate = vec_kv.iter().filter(|x| (x.key == "pandas")).next();
+            match candidate {
+                Some(kv) => {
+                    match &kv.value {
+                        Some(x) => Some(x),
+                        None => None,
+                    }
+                },
+                None => None,
+            }
+        },
+        None => None,
+    };
+    // TODO handle fails of json matchings
+    let pandas: Option<Pandas> = match pandas_raw {
+        Some(s) => {
+            let j: Value = serde_json::from_str(s).unwrap();
+            Some(Pandas {
+                version: j["pandas_version"].as_str().unwrap().to_string(),
+                library: j["creator"]["library"].as_str().unwrap().to_string() + "-" + j["creator"]["version"].as_str().unwrap(), 
+            })
+        },
+        None => None,
+    };
+    Creator {
+        created_by: file_metadata.created_by().unwrap_or("unknown"),
+        metadata_version: file_metadata.version(),
+        pandas: pandas,
+    }
+}
+
+
 pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
     // TODO error handling
     let reader = SerializedFileReader::try_from(file_path).unwrap();
@@ -59,6 +110,7 @@ pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
     let mut result: HashMap<&str, Value> = HashMap::new();
 
     insert!(result, "shape", shape(metadata));
+    insert!(result, "creator", creator(metadata));
     if level == 0 {
         insert!(result, "schema", schema_brief(metadata));
     } else {
