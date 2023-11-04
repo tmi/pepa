@@ -33,8 +33,10 @@ For parquets with many columns, run with `-l0` instead to get just a stats of ho
  - adding index stats to l0/l1 (`key_value_metadata.pandas -> parse json -> index_columns, partition_columns`)
  - adding disk size and memory usage as an option or l2,
  - supporting some simple filtering (though this is not supposed to replace any existing analytical engine),
- - per-column stats of null values, most frequent values as an option or l3
- - python interface for the library
+ - per-column stats of null values, most frequent values as an option or l3,
+ - support folder as an input,
+ - python interface for the library (usage: prior to running a batch job on multiple parquets, get stats for all of them to calculate the right batch size),
+ - pretty print vs jsonl output options,
 
 # Possible bugs
  - non scalar types could crash things
