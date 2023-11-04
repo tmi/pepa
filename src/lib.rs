@@ -3,10 +3,11 @@ use parquet::file::serialized_reader::SerializedFileReader;
 use parquet::file::reader::FileReader;
 use parquet::file::metadata::ParquetMetaData;
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{Value, Map};
 use std::collections::HashMap;
 use parquet::basic::Type;
 use std::path::Path;
+use std::fs;
 
 #[derive(Serialize, Debug)]
 struct Shape {
@@ -98,16 +99,14 @@ fn creator<'a>(metadata: &'a ParquetMetaData) -> Creator {
     }
 }
 
-
-pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
+pub fn summarize_single_parquet(file_path: &Path, level: u8, result: &mut Map<String, Value>) -> () {
     // TODO error handling
     let reader = SerializedFileReader::try_from(file_path).unwrap();
     let metadata: &ParquetMetaData = reader.metadata();
 
     // TODO accept only the hashmap and function, derive the key from the function by stripping up
     // to the first _
-    macro_rules! insert{ ($a: expr, $b: expr, $c: expr) => { $a.insert($b, serde_json::to_value(&$c).unwrap()) } }
-    let mut result: HashMap<&str, Value> = HashMap::new();
+    macro_rules! insert{ ($a: expr, $b: expr, $c: expr) => { $a.insert($b.to_string(), serde_json::to_value(&$c).unwrap()) } }
 
     insert!(result, "shape", shape(metadata));
     insert!(result, "creator", creator(metadata));
@@ -116,6 +115,28 @@ pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
     } else {
         insert!(result, "schema", schema_full(metadata));
     };
+}
 
+pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
+    let mut result: Map<String, Value> = Map::new();
+    if file_path.is_file() {
+        summarize_single_parquet(file_path, level, &mut result);
+    } else if file_path.is_dir() {
+        let listing = fs::read_dir(file_path).unwrap();
+        for entry in listing {
+            let entry_u = entry.unwrap();
+            let fname = entry_u.file_name().into_string().unwrap();
+            // TODO maybe use file_type() ?
+            if fname.ends_with(".parquet") || fname.ends_with(".pq") {
+                let mut subresult: Map<String, Value> = Map::new();
+                summarize_single_parquet(&entry_u.path(), level, &mut subresult);
+                let subresult_v: Value = subresult.into();
+                result.insert(fname, subresult_v);
+            }
+        }
+    } else {
+        eprintln!("neither dir nor file, dear sire! {}", file_path.display());
+        panic!("crash"); // TODO change return type to Result, return Error here instead
+    }
     serde_json::to_string_pretty(&result).unwrap()
 }

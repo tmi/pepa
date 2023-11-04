@@ -34,7 +34,7 @@ For parquets with many columns, run with `-l0` instead to get just a stats of ho
  - adding disk size and memory usage as an option or l2,
  - supporting some simple filtering (though this is not supposed to replace any existing analytical engine),
  - per-column stats of null values, most frequent values as an option or l3,
- - support folder as an input,
+ - support partition discovery when processing a folder,
  - python interface for the library (usage: prior to running a batch job on multiple parquets, get stats for all of them to calculate the right batch size),
  - pretty print vs jsonl output options,
 
