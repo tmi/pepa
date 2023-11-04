@@ -117,10 +117,9 @@ pub fn summarize_single_parquet(file_path: &Path, level: u8, result: &mut Map<St
     };
 }
 
-pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
-    let mut result: Map<String, Value> = Map::new();
+pub fn summarize_parquet_metadata(file_path: &Path, level: u8, result: &mut Map<String, Value>) -> () {
     if file_path.is_file() {
-        summarize_single_parquet(file_path, level, &mut result);
+        summarize_single_parquet(file_path, level, result);
     } else if file_path.is_dir() {
         let listing = fs::read_dir(file_path).unwrap();
         for entry in listing {
@@ -133,10 +132,10 @@ pub fn summarize_parquet_metadata(file_path: &Path, level: u8) -> String {
                 let subresult_v: Value = subresult.into();
                 result.insert(fname, subresult_v);
             }
+            // TODO recursive call here?
         }
     } else {
         eprintln!("neither dir nor file, dear sire! {}", file_path.display());
         panic!("crash"); // TODO change return type to Result, return Error here instead
     }
-    serde_json::to_string_pretty(&result).unwrap()
 }

@@ -2,6 +2,7 @@ use std::path::Path;
 use clap::Parser;
 use pepa::summarize_parquet_metadata;
 use std::process;
+use serde_json::{Value, Map};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -9,6 +10,9 @@ struct Args {
 
     #[arg(short, long, default_value_t = 1)]
     level: u8,
+
+    #[arg(long, default_value_t = false)]
+    jsonl: bool,
 }
 
 fn main() {
@@ -19,7 +23,13 @@ fn main() {
         eprintln!("File path {} does not exist.", args.file_path);
         process::exit(1);
     }
-    let summary = summarize_parquet_metadata(file_path, args.level);
 
+    let mut result: Map<String, Value> = Map::new();
+    summarize_parquet_metadata(file_path, args.level, &mut result);
+
+    let summary = match args.jsonl {
+        false => serde_json::to_string_pretty(&result).unwrap(),
+        true => serde_json::to_string(&result).unwrap(),
+    };
     println!("{summary}")
 }

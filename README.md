@@ -36,7 +36,6 @@ For parquets with many columns, run with `-l0` instead to get just a stats of ho
  - per-column stats of null values, most frequent values as an option or l3,
  - support partition discovery when processing a folder,
  - python interface for the library (usage: prior to running a batch job on multiple parquets, get stats for all of them to calculate the right batch size),
- - pretty print vs jsonl output options,
 
 # Possible bugs
  - non scalar types could crash things
