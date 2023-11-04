@@ -28,12 +28,13 @@ Install the crate and `pepa <yo-parquet-file>`, which by default nets you someth
 with the column types being physical, and number of columns going down to the leafs (thus a structure column is not counted as a 1).
 
 For parquets with many columns, run with `-l0` instead to get just a stats of how many columns per physical type are there.
+If you are interested in more per-column stats like nulls vs non-nulls, run with `-l2`.
 
 # Upcoming features
  - adding index stats to l0/l1 (`key_value_metadata.pandas -> parse json -> index_columns, partition_columns`)
  - adding disk size and memory usage as an option or l2,
  - supporting some simple filtering (though this is not supposed to replace any existing analytical engine),
- - per-column stats of null values, most frequent values as an option or l3,
+ - per-column stats of most frequent values as an option or l3,
  - support partition discovery when processing a folder,
  - python interface for the library (usage: prior to running a batch job on multiple parquets, get stats for all of them to calculate the right batch size),
 
@@ -44,4 +45,5 @@ For parquets with many columns, run with `-l0` instead to get just a stats of ho
 # Internal improvements
  - start breaking up the lib.rs into metadata parser, pandas parser, etc
  - tests
+ - error handling
  - build & publish pipeline

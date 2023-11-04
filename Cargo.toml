@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+arrow = "48.0.0"
 clap = { version = "4.4.6", features = ["derive"] }
 itertools = "0.11.0"
 parquet = "47.0.0"

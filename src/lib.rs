@@ -1,3 +1,5 @@
+mod arrow_analyzer;
+
 use itertools::Itertools;
 use parquet::file::serialized_reader::SerializedFileReader;
 use parquet::file::reader::FileReader;
@@ -8,6 +10,9 @@ use std::collections::HashMap;
 use parquet::basic::Type;
 use std::path::Path;
 use std::fs;
+use arrow_analyzer::columnar_stats;
+
+// TODO split into submodules
 
 #[derive(Serialize, Debug)]
 struct Shape {
@@ -99,7 +104,7 @@ fn creator<'a>(metadata: &'a ParquetMetaData) -> Creator {
     }
 }
 
-pub fn summarize_single_parquet(file_path: &Path, level: u8, result: &mut Map<String, Value>) -> () {
+fn summarize_single_parquet(file_path: &Path, level: u8, result: &mut Map<String, Value>) -> () {
     // TODO error handling
     let reader = SerializedFileReader::try_from(file_path).unwrap();
     let metadata: &ParquetMetaData = reader.metadata();
@@ -114,6 +119,9 @@ pub fn summarize_single_parquet(file_path: &Path, level: u8, result: &mut Map<St
         insert!(result, "schema", schema_brief(metadata));
     } else {
         insert!(result, "schema", schema_full(metadata));
+    };
+    if level >= 2 {
+        columnar_stats(file_path, result);
     };
 }
 
